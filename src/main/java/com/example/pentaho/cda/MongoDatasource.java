@@ -59,6 +59,10 @@ public class MongoDatasource {
 
 	@SuppressWarnings("unused")
 	private MongoClient getJndiConnection() throws Exception {
+
+		if (this.debug) {
+			System.out.println("[DEBUG] MongoDatasource: Getting the JNDI connection.");
+		}
 		
 		InitialContext cxt = new InitialContext();
 		
