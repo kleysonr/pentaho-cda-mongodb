@@ -14,35 +14,34 @@ public class MongoDatasource {
 
 	String jndi_name;
 	String database_name;
-	String collection_name;
-	Map columns;
-	MongoClient ds;
-	TypedTableModel model;
+	
+	MongoClient conn;
+	MongoDatabase database;
+	
 	boolean debug;
 	
-	public MongoDatasource(String jndi_name, String database_name, String collection_name, Map columns, boolean debug) throws Exception {
+	public MongoDatasource(String jndi_name, String database_name, boolean debug) throws Exception {
 
 		this.jndi_name = jndi_name;
 		this.database_name = database_name;
-		this.collection_name = collection_name;
-		this.columns = columns;
 		
-		this.ds = getJndiConnection();
-		this.model = createCdaModel();
+		this.conn = getJndiConnection();
+		
+		this.database = this.conn.getDatabase(this.database_name);
 		
 		this.debug = debug;
 	
 	}
 
 	// Create CDA table model
-	private TypedTableModel createCdaModel() {
+	private TypedTableModel createCdaModel(Map columns) {
 		
 		TypedTableModel model = new TypedTableModel();
 		
-		for (Object key : this.columns.keySet()) {
+		for (Object key : columns.keySet()) {
 			
 			String columnName = (String) key;
-			Class columnType = (Class) this.columns.get(key);
+			Class columnType = (Class) columns.get(key);
 			
 			model.addColumn(columnName, columnType);
 			
@@ -65,24 +64,26 @@ public class MongoDatasource {
 		   throw new Exception("Uh oh -- no context!");
 		}
 
-		ds = (MongoClient) cxt.lookup(this.jndi_name);
+		conn = (MongoClient) cxt.lookup(this.jndi_name);
 
-		if ( ds == null ) {
+		if ( conn == null ) {
 		   throw new Exception("Data source not found!");
 		}
 		
-		return ds;
+		return conn;
 		
 	}
 
-	public TypedTableModel runPipeline(Object[] query) {
+	public TypedTableModel runPipeline(Map columns, String collection_name, Object[] query) {
+		
+		TypedTableModel model = createCdaModel(columns);
 
 		List pipeline = Arrays.asList(query);
 		
-		// Execute MongoDB Query
-		MongoDatabase database = ds.getDatabase(this.database_name);
-		MongoCollection<Document> collection = database.getCollection(this.collection_name);
+		// Execute MongoDB Pipeline
+		MongoCollection<Document> collection = this.database.getCollection(collection_name);
 
+		@SuppressWarnings("unchecked")
 		MongoCursor<Document> results = collection.aggregate(pipeline).allowDiskUse(false).iterator();
 
 		// Loop each returned document
@@ -91,13 +92,17 @@ public class MongoDatasource {
 			List<Object> row = new ArrayList<Object>();
 
 			Document document = (Document) results.next();
+
+			if (this.debug) {
+				System.out.println("----------------------");
+			}
 			
-			for (Object key : this.columns.keySet()) {
+			for (Object key : columns.keySet()) {
 				
 				String columnName = (String) key;
 				
 				String rValue = (document.get(columnName) == null) ? "" : document.get(columnName).toString();
-				Object rClass = this.columns.get(columnName);
+				Object rClass = columns.get(columnName);
 
 				if (this.debug) {
 					System.out.println("[DEBUG] MongoDatasource: Result... " + columnName + ":" + rValue);
@@ -112,6 +117,10 @@ public class MongoDatasource {
 		
 		return model;		
 		
+	}
+	
+	public MongoDatabase getDb() {
+		return this.database;
 	}
 
 }
