@@ -4,7 +4,6 @@ import org.pentaho.reporting.engine.classic.core.util.TypedTableModel;
 import java.util.*;
 import javax.naming.InitialContext;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -19,7 +18,7 @@ public class MongoDatasource {
 	Map columns;
 	MongoClient ds;
 	TypedTableModel model;
-	private boolean debug;
+	boolean debug;
 	
 	public MongoDatasource(String jndi_name, String database_name, String collection_name, Map columns, boolean debug) throws Exception {
 
@@ -59,10 +58,6 @@ public class MongoDatasource {
 
 	@SuppressWarnings("unused")
 	private MongoClient getJndiConnection() throws Exception {
-
-		if (this.debug) {
-			System.out.println("[DEBUG] MongoDatasource: Getting the JNDI connection.");
-		}
 		
 		InitialContext cxt = new InitialContext();
 		
@@ -70,7 +65,7 @@ public class MongoDatasource {
 		   throw new Exception("Uh oh -- no context!");
 		}
 
-		ds = (MongoClient) cxt.lookup(jndi_name);
+		ds = (MongoClient) cxt.lookup(this.jndi_name);
 
 		if ( ds == null ) {
 		   throw new Exception("Data source not found!");
@@ -80,7 +75,7 @@ public class MongoDatasource {
 		
 	}
 
-	public TypedTableModel run(Object[] query) {
+	public TypedTableModel runPipeline(Object[] query) {
 
 		List pipeline = Arrays.asList(query);
 		
@@ -90,10 +85,10 @@ public class MongoDatasource {
 
 		MongoCursor<Document> results = collection.aggregate(pipeline).allowDiskUse(false).iterator();
 
-		List<String> row = new ArrayList<String>();
-
 		// Loop each returned document
 		while (results.hasNext()) {
+
+			List<Object> row = new ArrayList<Object>();
 
 			Document document = (Document) results.next();
 			
@@ -102,16 +97,17 @@ public class MongoDatasource {
 				String columnName = (String) key;
 				
 				String rValue = (document.get(columnName) == null) ? "" : document.get(columnName).toString();
+				Object rClass = this.columns.get(columnName);
 
 				if (this.debug) {
 					System.out.println("[DEBUG] MongoDatasource: Result... " + columnName + ":" + rValue);
 				}
 				
-				row.add(rValue);
+				row.add(new String(rValue));
 			}
 
-			model.addRow(row);
-
+			model.addRow(row.toArray());
+			
 		}
 		
 		return model;		
