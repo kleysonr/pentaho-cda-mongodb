@@ -25,37 +25,12 @@ public class Test {
 		columns.put("phone", String.class);
 		columns.put("mktsegment", String.class);
 
-		MongoDatasource mongoDS = new MongoDatasource(JNDI_NAME, DATABASE_NAME, COLLECTION_NAME, columns, true);
+		MongoDatasource mongoDS = new MongoDatasource(JNDI_NAME, DATABASE_NAME, true);
 
 		// MongoDB Pipeline
-		Object[] query = new Object[] {
-				new Document().append("$project",
-					new Document()
-						.append("_id", 1.0)
-						.append("custkey", 1.0)
-						.append("name", 1.0)
-						.append("address", 1.0)
-						.append("city", 1.0)
-						.append("nation_name", 1.0)
-						.append("region_name", 1.0)
-						.append("phone", 1.0)
-						.append("mktsegment", 1.0)
-				),
-				new Document().append("$project",
-					new Document()
-						.append("_id", 1.0)
-						.append("custkey", 1.0)
-						.append("name", 1.0)
-						.append("address", 1.0)
-						.append("city", 1.0)
-						.append("nation_name", 1.0)
-						.append("region_name", 1.0)
-						.append("phone", 1.0)
-						.append("mktsegment", 1.0)
-				)
-			};
+		String query = "[ {'$project': { '_id': 1, 'custkey': 1, 'name': 1, 'address': 1, 'city': 1, 'nation_name': 1, 'region_name': 1, 'phone': 1, 'mktsegment': 1 } } ]"; 
 		
-		mongoDS.run(query);
+		mongoDS.runPipeline(columns, COLLECTION_NAME, query);
 	}
 
 }

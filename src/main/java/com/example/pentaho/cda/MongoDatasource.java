@@ -4,6 +4,7 @@ import org.pentaho.reporting.engine.classic.core.util.TypedTableModel;
 import java.util.*;
 import javax.naming.InitialContext;
 import org.bson.Document;
+import org.json.JSONArray;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -74,12 +75,12 @@ public class MongoDatasource {
 		
 	}
 
-	public TypedTableModel runPipeline(Map columns, String collection_name, Object[] query) {
+	public TypedTableModel runPipeline(Map columns, String collection_name, String query) {
 		
 		TypedTableModel model = createCdaModel(columns);
-
-		List pipeline = Arrays.asList(query);
 		
+		List<Document> pipeline = convertQuery2Pipeline(query);
+
 		// Execute MongoDB Pipeline
 		MongoCollection<Document> collection = this.database.getCollection(collection_name);
 
@@ -119,6 +120,20 @@ public class MongoDatasource {
 		
 	}
 	
+	private List<Document> convertQuery2Pipeline(String query) {
+
+        JSONArray array = new JSONArray(query);
+        
+        List<Document> pipeline = new ArrayList<>();
+        
+        for(Object jsonObject : array){
+            Document document = Document.parse(jsonObject.toString());
+            pipeline.add(document);
+        }
+        
+        return pipeline;
+	}
+
 	public MongoDatabase getDb() {
 		return this.database;
 	}
