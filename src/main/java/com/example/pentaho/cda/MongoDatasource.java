@@ -122,16 +122,16 @@ public class MongoDatasource {
 	
 	private List<Document> convertQuery2Pipeline(String query) {
 
-        JSONArray array = new JSONArray(query);
-        
-        List<Document> pipeline = new ArrayList<>();
-        
-        for(Object jsonObject : array){
-            Document document = Document.parse(jsonObject.toString());
-            pipeline.add(document);
-        }
-        
-        return pipeline;
+		JSONArray array = new JSONArray(query);
+		
+		List<Document> pipeline = new ArrayList<>();
+		
+		for(Object jsonObject : array){
+			Document document = Document.parse(jsonObject.toString());
+			pipeline.add(document);
+		}
+		
+		return pipeline;
 	}
 
 	public MongoDatabase getDb() {
