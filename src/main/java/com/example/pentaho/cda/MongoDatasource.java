@@ -5,6 +5,7 @@ import java.util.*;
 import javax.naming.InitialContext;
 import org.bson.Document;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -102,7 +103,13 @@ public class MongoDatasource {
 				
 				String columnName = (String) key;
 				
-				String rValue = (document.get(columnName) == null) ? "" : document.get(columnName).toString();
+				String rValue = "";
+				if (document.get(columnName) instanceof Document) {
+					rValue = JSONObject.valueToString(((Document) document.get(columnName)).toJson());
+				} else {
+					rValue = document.get(columnName).toString();
+				}
+				
 				Object rClass = columns.get(columnName);
 
 				if (this.debug) {
