@@ -5,6 +5,7 @@ import java.util.*;
 import javax.naming.InitialContext;
 import org.bson.Document;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.mongodb.MongoClient;
@@ -76,10 +77,10 @@ public class MongoDatasource {
 		
 	}
 
-	public TypedTableModel runPipeline(Map columns, String collection_name, String query) {
-		
+	public TypedTableModel runPipeline(Map columns, String collection_name, String query) throws JSONException {
+
 		TypedTableModel model = createCdaModel(columns);
-		
+
 		List<Document> pipeline = convertQuery2Pipeline(query);
 
 		// Execute MongoDB Pipeline
@@ -102,10 +103,10 @@ public class MongoDatasource {
 			for (Object key : columns.keySet()) {
 				
 				String columnName = (String) key;
-				
+
 				String rValue = "";
 				if (document.get(columnName) instanceof Document) {
-					rValue = JSONObject.valueToString(((Document) document.get(columnName)).toJson());
+					rValue = new JSONObject(((Document) document.get(columnName)).toJson()).toString();
 				} else {
 					rValue = document.get(columnName).toString();
 				}
@@ -127,16 +128,17 @@ public class MongoDatasource {
 		
 	}
 	
-	private List<Document> convertQuery2Pipeline(String query) {
-
-		JSONArray array = new JSONArray(query);
+	private List<Document> convertQuery2Pipeline(String query) throws JSONException {
 		
+		JSONArray array = new JSONArray(query);
+
 		List<Document> pipeline = new ArrayList<>();
 		
-		for(Object jsonObject : array){
-			Document document = Document.parse(jsonObject.toString());
-			pipeline.add(document);
-		}
+        for (int i = 0; i < array.length(); i++) {
+        	JSONObject item = array.getJSONObject(i);
+        	Document document = Document.parse(item.toString());
+        	pipeline.add(document);
+        }
 		
 		return pipeline;
 	}
