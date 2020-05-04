@@ -12,7 +12,7 @@ public class Test {
 		String COLLECTION_NAME = "customer";
 		String JNDI_NAME = "java:/comp/env/mongodb/MongoClient";
 		
-		Map columns = new HashMap();
+		Map columns = new LinkedHashMap();
 		
 		// Set the output fields from the query - use only String.class
 		columns.put("_id", String.class);

@@ -108,7 +108,10 @@ public class MongoDatasource {
 				if (document.get(columnName) instanceof Document) {
 					rValue = new JSONObject(((Document) document.get(columnName)).toJson()).toString();
 				} else {
-					rValue = document.get(columnName).toString();
+					try {
+						rValue = document.get(columnName).toString();
+					}
+					catch (Exception e) { }
 				}
 				
 				Object rClass = columns.get(columnName);
